@@ -25,6 +25,8 @@ urlpatterns = [
     path('disciplinas/editar/<int:id>', views.editarDisciplina, name='editarDisciplina'),   
     path('disciplinas/<int:id>', views.eliminarDisciplina, name='eliminarDisciplina'),    
     
+    # PUBLICACIONES
+    path('perfil/<int:id>', views.perfilUsuario, name='perfilUsuario'),
+    path('publicaciones/crear', views.crearPublicacion, name='crearPublicacion'),    
     
-     
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -32,8 +32,8 @@ class Publicacion(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT)
     disciplina = models.ForeignKey(Disciplina, on_delete=models.PROTECT)
     fechaPublicacion = models.DateTimeField(auto_now_add=True)
-    imagen = models.ImageField(upload_to='imagenes/', blank=True, null=False)
-    mensaje = models.TextField(blank=True, null=False)
+    imagen = models.ImageField(upload_to='imagenes/', null=False)
+    mensaje = models.TextField(null=False)
 
     def __str__(self):
         return f"Publicación de {self.usuario} en {self.disciplina}"
