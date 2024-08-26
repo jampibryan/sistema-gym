@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from django.utils import timezone
 
 from .models import TipoGenero, Usuario, Disciplina, Publicacion
 from .forms import GeneroForm, UsuarioForm, DisciplinaForm, PublicacionForm
@@ -97,24 +98,35 @@ def eliminarDisciplina(request, id):
 # PUBLICACIONES
 
 def perfilUsuario(request, id):
-    # Obtén el usuario
     usuario = Usuario.objects.get(id=id)
-    
-    # Guarda el ID del usuario en la sesión
     request.session['usuario_id'] = id
     
-    # Obtén todas las publicaciones relacionadas con el usuario
     publicaciones = Publicacion.objects.filter(usuario=usuario)
     
-    # Pasa el usuario y las publicaciones al template
-    return render(request, 'publicaciones/index.html', {'usuario': usuario, 'publicaciones': publicaciones})
+    # Fecha actual en UTC
+    # ahora = timezone.now()
+    # inicio_semana = ahora - timezone.timedelta(days=ahora.weekday())
+    
+    # Convertir `inicio_semana` a la zona horaria local
+    # inicio_semana_local = timezone.localtime(inicio_semana)
 
+    # publicaciones_count = publicaciones.filter(
+    #     fechaPublicacion__gte=inicio_semana_local
+    # ).count()
+    
+    context = {
+        'usuario': usuario,
+        'publicaciones': publicaciones,
+        # 'publicaciones_count': publicaciones_count,
+    }
+
+    return render(request, 'publicaciones/index.html', context)
 
 def crearPublicacion(request):
     usuario_id = request.session.get('usuario_id')
     
     if not usuario_id:
-        # Si por alguna razón no está el usuario_id en la sesión, redirigir a algún lugar
+        # Si por alguna razón no está el usuario_id en la sesión, redirigir al perfil del usuario
         return redirect('perfilUsuario', id=usuario_id)
     
     usuario = Usuario.objects.get(id=usuario_id)
@@ -131,9 +143,3 @@ def crearPublicacion(request):
     return render(request, 'publicaciones/crear.html', {'formulario': formulario, 'usuario': usuario})
 
 
-
-    # formulario = PublicacionForm(request.POST or None, request.FILES or None)
-    # if formulario.is_valid():
-    #     formulario.save()
-    #     return redirect('perfilUsuario', id=id)
-    # return render(request, 'publicaciones/crear.html', {'formulario' : formulario, 'id': id})

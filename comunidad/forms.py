@@ -33,3 +33,4 @@ class PublicacionForm(forms.ModelForm):
         model = Publicacion
         fields = '__all__'
         fields = ['disciplina', 'imagen', 'mensaje']  # Especifica los campos que quieres incluir
+      
