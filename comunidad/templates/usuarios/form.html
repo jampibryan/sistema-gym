@@ -1,0 +1,40 @@
+<form enctype="multipart/form-data" method="post">
+    {% csrf_token %} {% for campo in formulario %}
+    <div class="mb-3">
+      <label for="" class="form-label">{{ campo.label }}</label>
+      {% comment %}       
+      <input
+        type="{{ campo.field.widget.input_type}}"
+        class="form-control"
+        name="{{ campo.name}}"
+        id=""
+        placeholder="{{ campo.label }}"
+        value="{{ campo.value | default:''}}"
+      /> {% endcomment %}
+  
+      {{campo}}
+
+      <div class="col-12 help-text">{{campo.errors}}</div>
+      {% endfor %}
+      <hr />
+      
+      <input
+        name=""
+        id=""
+        class="btn btn-primary"
+        type="submit"
+        value="Registrar"
+      />
+  
+      <a
+        name=""
+        id=""
+        class="btn btn-dark"
+        href="{% url 'usuarios' %}"
+        role="button"
+        >Regresar</a
+      >
+      
+    </div>
+  </form>
+  
