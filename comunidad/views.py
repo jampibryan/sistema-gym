@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
-from .models import TipoGenero, Usuario
-from .forms import GeneroForm, UsuarioForm
+from .models import TipoGenero, Usuario, Disciplina
+from .forms import GeneroForm, UsuarioForm, DisciplinaForm
 
 # Create your views here.
 
@@ -64,3 +64,31 @@ def eliminarUsuario(request, id):
     usuario = Usuario.objects.get(id=id)
     usuario.delete()
     return redirect('usuarios')
+
+
+# DISCIPLINAS
+
+def disciplinas(request):
+    disciplinas = Disciplina.objects.all()
+    return render(request, 'disciplinas/index.html', {'disciplinas': disciplinas})
+
+def crearDisciplina(request):
+    formulario = DisciplinaForm(request.POST or None, request.FILES or None)
+    if formulario.is_valid():
+        formulario.save()
+        return redirect('disciplinas')
+    return render(request, 'disciplinas/crear.html', {'formulario' : formulario})
+
+def editarDisciplina(request, id):
+    disciplina = Disciplina.objects.get(id=id)
+    formulario = DisciplinaForm(request.POST or None, request.FILES or None, instance=disciplina)
+    
+    if formulario.is_valid() and request.POST:
+        formulario.save()
+        return redirect('disciplinas')
+    return render(request, 'disciplinas/editar.html', {'formulario': formulario})
+
+def eliminarDisciplina(request, id):
+    disciplina = Disciplina.objects.get(id=id)
+    disciplina.delete()
+    return redirect('disciplinas')
