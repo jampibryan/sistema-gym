@@ -49,16 +49,22 @@
       <!-- place navbar here -->
     </header>
     <main class="container mt-4">
-      <h1>Hola, {{usuario.nombres}}</h1>
+      {% comment %} <h1>Hola, {{usuario.nombres}}</h1> {% endcomment %}
+      <h1>Hola, {{user.username}}</h1>
       <h1>¡Bienvenido!</h1>
       <a class="btn btn-primary" href="{% url 'crearPublicacion' %}"
         >Publicar</a
       >
-      <a class="btn btn-secondary" href="{% url 'usuarios' %}">Regresar</a>
 
+      <!-- Cerrar sesión -->
+      <form action="{% url 'logout' %}" method="post" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Cerrar sesión</button>
+      </form>
+      
       <!-- Sección de publicaciones -->
       <h2 class="text-center py-4">Publicaciones</h2>
-      <p class="text-center">Número de publicaciones esta semana: {{ publicaciones_count }} 0 / 7</p>
+      {% comment %} <p class="text-center">Número de publicaciones esta semana: {{ publicaciones_count }} 0 / 7</p> {% endcomment %}
 
       <div class="row">
         {% for publicacion in publicaciones %}

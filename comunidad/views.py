@@ -2,69 +2,20 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.utils import timezone
 
-from .models import TipoGenero, Usuario, Disciplina, Publicacion
-from .forms import GeneroForm, UsuarioForm, DisciplinaForm, PublicacionForm
+from .models import Disciplina, Publicacion
+from .forms import DisciplinaForm, PublicacionForm
+
+from django.contrib.auth import login as auth_login, authenticate
+from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.models import User
+
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
 def inicio(request):
     return render(request, 'inicio.html')
-
-
-# GÉNERO
-
-def generos(request):
-    generos = TipoGenero.objects.all()
-    return render(request, 'generos/index.html', {'generos': generos})
-
-def crearGenero(request):
-    formulario = GeneroForm(request.POST or None, request.FILES or None)
-    if formulario.is_valid():
-        formulario.save()
-        return redirect('generos')
-    return render(request, 'generos/crear.html', {'formulario' : formulario})
-
-def editarGenero(request, id):
-    genero = TipoGenero.objects.get(id=id)
-    formulario = GeneroForm(request.POST or None, request.FILES or None, instance=genero)
-    
-    if formulario.is_valid() and request.POST:
-        formulario.save()
-        return redirect('generos')
-    return render(request, 'generos/editar.html', {'formulario': formulario})
-
-def eliminarGenero(request, id):
-    genero = TipoGenero.objects.get(id=id)
-    genero.delete()
-    return redirect('generos')
-
-
-# USUARIOS
-
-def usuarios(request):
-    usuarios = Usuario.objects.all()
-    return render(request, 'usuarios/index.html', {'usuarios': usuarios})
-
-def crearUsuario(request):
-    formulario = UsuarioForm(request.POST or None, request.FILES or None)
-    if formulario.is_valid():
-        formulario.save()
-        return redirect('usuarios')
-    return render(request, 'usuarios/crear.html', {'formulario' : formulario})
-
-def editarUsuario(request, id):
-    usuario = Usuario.objects.get(id=id)
-    formulario = UsuarioForm(request.POST or None, request.FILES or None, instance=usuario)
-    
-    if formulario.is_valid() and request.POST:
-        formulario.save()
-        return redirect('usuarios')
-    return render(request, 'usuarios/editar.html', {'formulario': formulario})
-
-def eliminarUsuario(request, id):
-    usuario = Usuario.objects.get(id=id)
-    usuario.delete()
-    return redirect('usuarios')
 
 
 # DISCIPLINAS
@@ -97,49 +48,79 @@ def eliminarDisciplina(request, id):
 
 # PUBLICACIONES
 
+@login_required
 def perfilUsuario(request, id):
-    usuario = Usuario.objects.get(id=id)
-    request.session['usuario_id'] = id
+    # Obtén el usuario solicitado
+    user = User.objects.get(id=id)
     
-    publicaciones = Publicacion.objects.filter(usuario=usuario)
+    # Verifica que el usuario autenticado tenga permiso para ver el perfil
+    if request.user.id != id:
+        # Redirige a una página de acceso denegado o muestra un mensaje de error
+        return redirect('inicio')  # Redirige a una página de inicio o error
     
-    # Fecha actual en UTC
-    # ahora = timezone.now()
-    # inicio_semana = ahora - timezone.timedelta(days=ahora.weekday())
-    
-    # Convertir `inicio_semana` a la zona horaria local
-    # inicio_semana_local = timezone.localtime(inicio_semana)
+    publicaciones = Publicacion.objects.filter(usuario = user)
+    return render(request, 'publicaciones/index.html', {'user': user, 'publicaciones': publicaciones})
 
-    # publicaciones_count = publicaciones.filter(
-    #     fechaPublicacion__gte=inicio_semana_local
-    # ).count()
+
+# def crearPublicacion(request):
+#     usuario_id = request.session.get('usuario_id')
     
-    context = {
-        'usuario': usuario,
-        'publicaciones': publicaciones,
-        # 'publicaciones_count': publicaciones_count,
-    }
+#     if not usuario_id:
+#         return redirect('perfilUsuario', id=usuario_id)
+    
+#     usuario = Usuario.objects.get(id=usuario_id)
+#     if request.method == 'POST':
+#         formulario = PublicacionForm(request.POST, request.FILES)
+#         if formulario.is_valid():
+#             publicacion = formulario.save(commit=False)
+#             publicacion.usuario = usuario
+#             publicacion.save()
+#             return redirect('perfilUsuario', id = usuario_id)
+#     else:
+#         formulario = PublicacionForm()
 
-    return render(request, 'publicaciones/index.html', context)
+#     return render(request, 'publicaciones/crear.html', {'formulario': formulario, 'usuario': usuario})
 
+
+@login_required
 def crearPublicacion(request):
-    usuario_id = request.session.get('usuario_id')
-    
-    if not usuario_id:
-        # Si por alguna razón no está el usuario_id en la sesión, redirigir al perfil del usuario
-        return redirect('perfilUsuario', id=usuario_id)
-    
-    usuario = Usuario.objects.get(id=usuario_id)
     if request.method == 'POST':
-        formulario = PublicacionForm(request.POST, request.FILES)
-        if formulario.is_valid():
-            publicacion = formulario.save(commit=False)
-            publicacion.usuario = usuario
+        form = PublicacionForm(request.POST, request.FILES)
+        if form.is_valid():
+            publicacion = form.save(commit=False)
+            publicacion.usuario = request.user  # Asignar el usuario autenticado
             publicacion.save()
-            return redirect('perfilUsuario', id = usuario_id)
+            return redirect('perfilUsuario', id=request.user.id)
     else:
-        formulario = PublicacionForm()
+        form = PublicacionForm()
+    
+    return render(request, 'publicaciones/crear.html', {'formulario': form})
 
-    return render(request, 'publicaciones/crear.html', {'formulario': formulario, 'usuario': usuario})
+# AUTENTICACIÓN
 
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            auth_login(request, user)  # Correcto uso de login
+            return redirect('perfilUsuario', id=user.id)
+    else:
+        form = AuthenticationForm()
+    return render(request, 'login.html', {'form': form})
 
+def register_view(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            auth_login(request, user)  # Correcto uso de login
+            return redirect('perfilUsuario', id=user.id)
+    else:
+        form = UserCreationForm()
+    return render(request, 'register.html', {'form': form})
+
+# LOGOUT
+def logout_view(request):
+    auth_logout(request)
+    return redirect('inicio')  # Redirige a la página de login o a la página principal después de cerrar sesión

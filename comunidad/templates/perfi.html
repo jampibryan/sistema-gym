@@ -1,5 +1,4 @@
-
-{% extends "base.html" %} {% block titulo %} ZEUS GYM {% endblock %} 
+{% extends "base.html" %} {% block titulo %} Inicio {% endblock %} 
 
 {% block contenido %}
 
@@ -14,7 +13,7 @@
       </nav>
     </header>
 
-    <h1 class="display-5">Hola</h1>
+    <h1 class="display-5">Hola {{ user.username }}</h1>
     <p class="lead">Comunidad</p>
     <hr class="my-2" />
 
