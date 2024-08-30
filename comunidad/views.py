@@ -3,9 +3,10 @@ from django.http import HttpResponse
 from django.utils import timezone
 
 from .models import Disciplina, Publicacion
-from .forms import DisciplinaForm, PublicacionForm
+from .forms import DisciplinaForm, PublicacionForm, CustomAuthenticationForm, RegistroForm
 
-from django.contrib.auth import login as auth_login, authenticate
+# from django.contrib.auth import login as auth_login, authenticate
+from django.contrib.auth import login, authenticate
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
@@ -15,7 +16,9 @@ from django.contrib.auth.decorators import login_required
 # Create your views here.
 
 def inicio(request):
-    return render(request, 'inicio.html')
+    
+    publicaciones = Publicacion.objects.all()
+    return render(request, 'inicio.html', {'publicaciones': publicaciones})
 
 
 # DISCIPLINAS
@@ -60,26 +63,7 @@ def perfilUsuario(request, id):
     
     publicaciones = Publicacion.objects.filter(usuario = user)
     return render(request, 'publicaciones/index.html', {'user': user, 'publicaciones': publicaciones})
-
-
-# def crearPublicacion(request):
-#     usuario_id = request.session.get('usuario_id')
     
-#     if not usuario_id:
-#         return redirect('perfilUsuario', id=usuario_id)
-    
-#     usuario = Usuario.objects.get(id=usuario_id)
-#     if request.method == 'POST':
-#         formulario = PublicacionForm(request.POST, request.FILES)
-#         if formulario.is_valid():
-#             publicacion = formulario.save(commit=False)
-#             publicacion.usuario = usuario
-#             publicacion.save()
-#             return redirect('perfilUsuario', id = usuario_id)
-#     else:
-#         formulario = PublicacionForm()
-
-#     return render(request, 'publicaciones/crear.html', {'formulario': formulario, 'usuario': usuario})
 
 
 @login_required
@@ -98,29 +82,55 @@ def crearPublicacion(request):
 
 # AUTENTICACIÓN
 
+# def login_view(request):
+#     if request.method == 'POST':
+#         form = AuthenticationForm(request, data=request.POST)
+#         if form.is_valid():
+#             user = form.get_user()
+#             auth_login(request, user)  # Correcto uso de login
+#             return redirect('perfilUsuario', id=user.id)
+#     else:
+#         form = AuthenticationForm()
+#     return render(request, 'login.html', {'form': form})
+
+# def register_view(request):
+#     if request.method == 'POST':
+#         form = UserCreationForm(request.POST)
+#         if form.is_valid():
+#             user = form.save()
+#             auth_login(request, user)  # Correcto uso de login
+#             return redirect('perfilUsuario', id=user.id)
+#     else:
+#         form = UserCreationForm()
+#     return render(request, 'register.html', {'form': form})
+
+
+
 def login_view(request):
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
+        form = CustomAuthenticationForm(request.POST)
         if form.is_valid():
-            user = form.get_user()
-            auth_login(request, user)  # Correcto uso de login
-            return redirect('perfilUsuario', id=user.id)
+            user = form.cleaned_data.get('user')
+            login(request, user)
+            return redirect('perfilUsuario', id = user.id) 
     else:
-        form = AuthenticationForm()
+        form = CustomAuthenticationForm()
+
     return render(request, 'login.html', {'form': form})
 
 def register_view(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = RegistroForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            auth_login(request, user)  # Correcto uso de login
-            return redirect('perfilUsuario', id=user.id)
+            form.save()
+            return redirect('login')
     else:
-        form = UserCreationForm()
+        form = RegistroForm()
+
     return render(request, 'register.html', {'form': form})
+
 
 # LOGOUT
 def logout_view(request):
     auth_logout(request)
-    return redirect('inicio')  # Redirige a la página de login o a la página principal después de cerrar sesión
+    return redirect('inicio') 

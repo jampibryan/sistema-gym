@@ -37,7 +37,7 @@
             height: auto;
         }
 
-        .publicacion-item .mensaje, .fechaPublicacion {
+        .publicacion-item .mensaje, .fechaPost {
             padding: 10px;
             font-size: 14px;
         }
@@ -50,7 +50,7 @@
     </header>
     <main class="container mt-4">
       {% comment %} <h1>Hola, {{usuario.nombres}}</h1> {% endcomment %}
-      <h1>Hola, {{user.username}}</h1>
+      <h1>Hola, {{user.usuario.nombre}} {{user.usuario.apellidos}}</h1>
       <h1>¡Bienvenido!</h1>
       <a class="btn btn-primary" href="{% url 'crearPublicacion' %}"
         >Publicar</a
@@ -82,7 +82,7 @@
               alt="Imagen de publicación"
             />
             {% endif %}
-            <div class="fechaPublicacion">{{ publicacion.fechaPublicacion }}</div>
+            <div class="fechaPost">{{ publicacion.fechaPost }}</div>
             <div class="mensaje">{{ publicacion.mensaje }}</div>
           </div>
         </div>
