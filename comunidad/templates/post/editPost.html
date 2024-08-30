@@ -1,0 +1,27 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Publicación</title>
+    <!-- Agrega tus estilos y scripts aquí -->
+</head>
+<body>
+    <a href="{% url 'perfilUsuario' publicacion.usuario.id %}" class="btn btn-primary">Regresar</a>
+    <h1>Editar Publicación</h1>
+
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            {{ form.as_p }}
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    </form>
+</body>
+</html>
+
+
+

@@ -96,8 +96,8 @@ class DisciplinaForm(forms.ModelForm):
             'descripcionD': ''
         }
         
-
-
+        
+# Formulario de Publicación
 class PublicacionForm(forms.ModelForm):
     class Meta:
         model = Publicacion
@@ -109,5 +109,6 @@ class ImagenMensajeForm(forms.ModelForm):
         fields = ['imagen', 'mensaje']
 
 ImagenMensajeFormSet = inlineformset_factory(
+    # Publicacion, ImagenMensaje, form=ImagenMensajeForm, extra=7, max_num=7, can_delete=False
     Publicacion, ImagenMensaje, form=ImagenMensajeForm, extra=7, max_num=7
 )

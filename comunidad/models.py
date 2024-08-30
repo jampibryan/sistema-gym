@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+import os
+
 
 class TipoGenero(models.Model):
     descripcion = models.CharField(max_length=100)
@@ -41,3 +43,26 @@ class ImagenMensaje(models.Model):
 
     def __str__(self):
         return f"Imagen de {self.publicacion.usuario} con mensaje"
+    
+    def save(self, *args, **kwargs):
+        if self.pk:  # Si el objeto ya existe
+            old_instance = ImagenMensaje.objects.get(pk=self.pk)
+            if old_instance.imagen != self.imagen:
+                if old_instance.imagen:
+                    try:
+                        if os.path.isfile(old_instance.imagen.path):
+                            os.remove(old_instance.imagen.path)
+                    except Exception as e:
+                        # Registrar la excepción o manejarla según sea necesario
+                        print(f"Error al eliminar archivo antiguo: {e}")
+        super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        if self.imagen:
+            try:
+                if os.path.isfile(self.imagen.path):
+                    os.remove(self.imagen.path)
+            except Exception as e:
+                # Registrar la excepción o manejarla según sea necesario
+                print(f"Error al eliminar archivo: {e}")
+        super().delete(*args, **kwargs)

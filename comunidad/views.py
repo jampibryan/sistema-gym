@@ -1,17 +1,12 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from django.utils import timezone
-
-from .models import Disciplina, Publicacion
-from .forms import DisciplinaForm, CustomAuthenticationForm, RegistroForm,  PublicacionForm, ImagenMensajeFormSet
-
-# from django.contrib.auth import login as auth_login, authenticate
-from django.contrib.auth import login, authenticate
-from django.contrib.auth import logout as auth_logout
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib import messages
+from django.contrib.auth import login, authenticate, logout as auth_logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 
-from django.contrib.auth.decorators import login_required
+from .models import Disciplina, Publicacion
+from .forms import DisciplinaForm, CustomAuthenticationForm, RegistroForm, PublicacionForm, ImagenMensajeFormSet
+
 
 # Create your views here.
 
@@ -20,9 +15,41 @@ def inicio(request):
     # return render(request, 'inicio.html', {'publicaciones': publicaciones})
     return redirect('login')
 
+#LOGIN DE USUARIO
+
+def login_view(request):
+    if request.method == 'POST':
+        form = CustomAuthenticationForm(request.POST)
+        if form.is_valid():
+            user = form.cleaned_data.get('user')
+            login(request, user)
+            return redirect('perfilUsuario', id = user.id) 
+    else:
+        form = CustomAuthenticationForm()
+
+    return render(request, 'login.html', {'form': form})
+
+#REGISTRO DE USUARIO
+
+def register_view(request):
+    if request.method == 'POST':
+        form = RegistroForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('login')
+    else:
+        form = RegistroForm()
+
+    return render(request, 'register.html', {'form': form})
+
+
+# LOGOUT
+def logout_view(request):
+    auth_logout(request)
+    return redirect('inicio') 
+
 
 # DISCIPLINAS
-
 def disciplinas(request):
     disciplinas = Disciplina.objects.all()
     return render(request, 'disciplinas/index.html', {'disciplinas': disciplinas})
@@ -49,7 +76,7 @@ def eliminarDisciplina(request, id):
     return redirect('disciplinas')
 
 
-# PUBLICACIONES
+# PERFIL DE USUARIO
 
 @login_required
 def perfilUsuario(request, id):
@@ -59,42 +86,16 @@ def perfilUsuario(request, id):
         return redirect('login')
     
     publicaciones = Publicacion.objects.filter(usuario=user).prefetch_related('imagenes')
-    return render(request, 'perfil.html', {'user': user, 'publicaciones': publicaciones})
+    
+    # Verificar si el usuario ya ha hecho una publicación
+    publicacion_reciente = publicaciones.exists()
+    
+    return render(request, 'perfil.html', {
+        'user': user,
+        'publicaciones': publicaciones,
+        'publicacion_reciente': publicacion_reciente 
+    })
 
-
-    # return render(request, 'publicaciones/index.html', {'user': user, 'publicaciones': publicaciones})
-
-
-
-def login_view(request):
-    if request.method == 'POST':
-        form = CustomAuthenticationForm(request.POST)
-        if form.is_valid():
-            user = form.cleaned_data.get('user')
-            login(request, user)
-            return redirect('perfilUsuario', id = user.id) 
-    else:
-        form = CustomAuthenticationForm()
-
-    return render(request, 'login.html', {'form': form})
-
-
-def register_view(request):
-    if request.method == 'POST':
-        form = RegistroForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('login')
-    else:
-        form = RegistroForm()
-
-    return render(request, 'register.html', {'form': form})
-
-
-# LOGOUT
-def logout_view(request):
-    auth_logout(request)
-    return redirect('inicio') 
 
 
 
@@ -106,12 +107,17 @@ def crearPublicacion(request):
         formset = ImagenMensajeFormSet(request.POST, request.FILES)
         
         if publicacion_form.is_valid() and formset.is_valid():
-            publicacion = publicacion_form.save(commit=False)
-            publicacion.usuario = request.user
-            publicacion.save()
-            formset.instance = publicacion
-            formset.save()
-            return redirect('perfilUsuario', id=request.user.id)  # Redirige al perfil del usuario
+            has_image = any([form.cleaned_data.get('imagen') for form in formset.forms])
+            
+            if not has_image:
+                messages.error(request, "Debe subir almenos 1 imagen.")
+            else:
+                publicacion = publicacion_form.save(commit=False)
+                publicacion.usuario = request.user
+                publicacion.save()
+                formset.instance = publicacion
+                formset.save()
+                return redirect('perfilUsuario', id=request.user.id)
     else:
         publicacion_form = PublicacionForm()
         formset = ImagenMensajeFormSet()
@@ -119,5 +125,26 @@ def crearPublicacion(request):
     return render(request, 'post/createPost.html', {
         'publicacion_form': publicacion_form,
         'formset': formset,
-        'id' : request.user.id,
+        'id': request.user.id,
     })
+    
+    
+    
+# EDITAR PUBLICACIÓN
+
+def editarPublicacion(request, publicacion_id):
+    publicacion = Publicacion.objects.get(id=publicacion_id)
+    
+    if request.user != publicacion.usuario:
+        return redirect('perfilUsuario', id=request.user.id)
+    
+    if request.method == 'POST':
+        formset = ImagenMensajeFormSet(request.POST, request.FILES, instance=publicacion)
+        if formset.is_valid():
+            formset.save()
+            return redirect('perfilUsuario', id=request.user.id)
+    else:
+        formset = ImagenMensajeFormSet(instance=publicacion)
+    
+    return render(request, 'post/editPost.html', {'formset': formset, 'publicacion': publicacion})
+

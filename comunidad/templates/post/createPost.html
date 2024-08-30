@@ -9,6 +9,15 @@
     <a href="{% url 'perfilUsuario' id%}" class="btn btn-primary">Regresar</a>
     <h1>Nueva Publicación</h1>
 
+    <!-- Mostrar mensajes de error -->
+    {% if messages %}
+        <ul class="errorlist">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{ formset.management_form }}

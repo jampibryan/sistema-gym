@@ -14,7 +14,8 @@ urlpatterns = [
       
     #PERFIL USUARIO
     path('perfil/<int:id>', views.perfilUsuario, name='perfilUsuario'),
-    path('publicacion/crear', views.crearPublicacion, name='crearPublicacion'),    
+    path('publicacion/crear', views.crearPublicacion, name='crearPublicacion'),
+    path('publicacion/editar/<int:publicacion_id>', views.editarPublicacion, name='editarPublicacion'),
 
       
     # DISCIPLINAS
@@ -22,10 +23,6 @@ urlpatterns = [
     # path('disciplinas/crear', views.crearDisciplina, name='crearDisciplina'),    
     # path('disciplinas/editar/<int:id>', views.editarDisciplina, name='editarDisciplina'),   
     # path('disciplinas/<int:id>', views.eliminarDisciplina, name='eliminarDisciplina'),    
-    
-    # PUBLICACIONES
-    # path('perfil/<int:id>', views.perfilUsuario, name='perfilUsuario'),
-    # path('publicaciones/crear', views.crearPublicacion, name='crearPublicacion'),    
     
 
     
