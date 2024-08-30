@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Publicación</title>
+</head>
+<body>
+    <a href="{% url 'perfilUsuario' id%}" class="btn btn-primary">Regresar</a>
+    <h1>Nueva Publicación</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {{ formset.non_form_errors }}
+        {% for form in formset %}
+            <div>
+                {{ form.imagen.label_tag }} {{ form.imagen }}
+                {{ form.mensaje.label_tag }} {{ form.mensaje }}
+            </div>
+        {% endfor %}
+        <button type="submit">Publicar</button>
+    </form>
+</body>
+</html>

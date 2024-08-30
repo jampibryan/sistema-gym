@@ -8,6 +8,7 @@
 </head>
 <body>
     <h1>Iniciar Sesión</h1>
+    <a href="{% url 'register' %}">Registrarse</a>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

@@ -1,7 +1,9 @@
 from django import forms
-from .models import Usuario, TipoGenero, Disciplina, Publicacion
+from .models import Usuario, TipoGenero, Disciplina, Publicacion, ImagenMensaje
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User  # Importa el modelo User
+from django.forms import inlineformset_factory
+
 
 # Formulario de autenticación personalizado
 class CustomAuthenticationForm(forms.Form):
@@ -27,18 +29,22 @@ class CustomAuthenticationForm(forms.Form):
         return self.cleaned_data
 
 
+
 # Formulario de registro de usuario
 class RegistroForm(forms.ModelForm):
     email = forms.EmailField(required=True)
     password = forms.CharField(widget=forms.PasswordInput, required=True)
     password2 = forms.CharField(widget=forms.PasswordInput, label="Confirmar contraseña", required=True)
-    genero = forms.ModelChoiceField(queryset=TipoGenero.objects.all(), required=True)
+    username = forms.CharField(required=True)
     nombre = forms.CharField(required=True)
     apellidos = forms.CharField(required=True)
+    fotoPerfil = forms.ImageField(required=True)
+    genero = forms.ModelChoiceField(queryset=TipoGenero.objects.all(), required=True)
+    disciplina = forms.ModelChoiceField(queryset=Disciplina.objects.all(), required=False)
 
     class Meta:
-        model = User
-        fields = ['username', 'email', 'password', 'password2']
+        model = Usuario
+        fields = ['username', 'email', 'password', 'password2', 'fotoPerfil', 'nombre', 'apellidos', 'genero', 'disciplina']
 
     def clean(self):
         cleaned_data = super().clean()
@@ -51,21 +57,28 @@ class RegistroForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        user = super().save(commit=False)
-        user.email = self.cleaned_data['email']
-        user.set_password(self.cleaned_data['password'])
+        # Creando usuario de la tabla User
+        user = User.objects.create_user(
+            username=self.cleaned_data['username'],
+            email=self.cleaned_data['email'],
+            password=self.cleaned_data['password']
+        )
+
+        # Creando instancia del modelo Usuario
+        usuario = Usuario(
+            user=user,
+            nombre=self.cleaned_data['nombre'],
+            apellidos=self.cleaned_data['apellidos'],
+            genero=self.cleaned_data['genero'],
+            fotoPerfil=self.cleaned_data['fotoPerfil'],
+            disciplina=self.cleaned_data['disciplina'],
+        )
 
         if commit:
-            user.save()
-            usuario = Usuario(
-                user=user,
-                nombre=self.cleaned_data['nombre'],
-                apellidos=self.cleaned_data['apellidos'],
-                genero=self.cleaned_data['genero'],
-            )
             usuario.save()
 
-        return user
+        return usuario
+    
 
 
 # Formulario de Disciplina
@@ -74,18 +87,27 @@ class DisciplinaForm(forms.ModelForm):
         model = Disciplina
         fields = '__all__'
         widgets = {
-            'descripcionDisciplina': forms.TextInput(attrs={
+            'descripcionD': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Descripción'
             })
         }
         labels = {
-            'descripcionDisciplina': ''
+            'descripcionD': ''
         }
         
-        
-# Formulario de Publicación
-class PublicacionForm(forms.ModelForm): 
+
+
+class PublicacionForm(forms.ModelForm):
     class Meta:
         model = Publicacion
-        fields = ['disciplina', 'imagen', 'mensaje']  # Especifica los campos que quieres incluir
+        fields = []
+
+class ImagenMensajeForm(forms.ModelForm):
+    class Meta:
+        model = ImagenMensaje
+        fields = ['imagen', 'mensaje']
+
+ImagenMensajeFormSet = inlineformset_factory(
+    Publicacion, ImagenMensaje, form=ImagenMensajeForm, extra=7, max_num=7
+)
